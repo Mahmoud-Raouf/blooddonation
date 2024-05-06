@@ -64,7 +64,7 @@ class _OptionState extends State<Option> {
           CustomButton(
             // CustomButton(): عنصر زر مخصص
             onTap: () {
-              Get.toNamed(AppRoute.SIGNUP); // انتقال إلى الشاشة التالية عند النقر على الزر
+              // Get.toNamed(AppRoute.SIGNUP); // انتقال إلى الشاشة التالية عند النقر على الزر
             },
             backgroundColor: AppTheme.colorWhite,
             borderColor: AppTheme.themeColor,

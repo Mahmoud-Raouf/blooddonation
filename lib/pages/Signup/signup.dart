@@ -15,7 +15,9 @@ import '../../widgets/Custom_Textfield.dart';
 import 'signup_controller.dart';
 
 class SignUp extends StatefulWidget {
-  const SignUp({super.key});
+  const SignUp({
+    super.key,
+  });
 
   @override
   State<SignUp> createState() => _SignUpState();
@@ -46,6 +48,7 @@ class _SignUpState extends State<SignUp> {
   final _chronicDiseases = TextEditingController();
   final _age = TextEditingController();
   final _weight = TextEditingController();
+  final _height = TextEditingController();
   Future<void> signUp() async {
     bool passwordConfirmed() {
       if (_passwordController.text.trim() == _confirmPasswordController.text.trim()) {
@@ -76,9 +79,11 @@ class _SignUpState extends State<SignUp> {
           "uid": result.user?.uid,
           'name': _nameController.text,
           'number': _numberController.text,
+          'role': 'user',
           'bloodType': _bloodTypeController.text,
           'chronicDiseases': _chronicDiseases.text,
           'weight': _weight.text,
+          'height': _height.text,
           'age': _age.text,
           'location': _locationController.text,
         });
@@ -212,6 +217,14 @@ class _SignUpState extends State<SignUp> {
                       CustomTextFeild(
                         controller: _weight,
                         hintText: Strings.weight,
+                        prefixIcon: const Icon(
+                          Icons.numbers,
+                          color: AppTheme.colorblack87,
+                        ),
+                      ),
+                      CustomTextFeild(
+                        controller: _height,
+                        hintText: Strings.height,
                         prefixIcon: const Icon(
                           Icons.numbers,
                           color: AppTheme.colorblack87,

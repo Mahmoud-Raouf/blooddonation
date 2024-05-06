@@ -1,9 +1,9 @@
+import 'package:blooddonation/pages/Signup/signup.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:blooddonation/pages/Dashboard/home.dart';
 import 'package:blooddonation/pages/Login/login_controller.dart';
-import 'package:blooddonation/pages/signup/signup.dart';
 import 'package:blooddonation/theme/app_theme.dart';
 import 'package:blooddonation/util/_string.dart';
 import 'package:blooddonation/util/constants.dart';

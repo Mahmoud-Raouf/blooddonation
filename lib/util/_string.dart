@@ -35,6 +35,7 @@ class Strings {
   static const String phoneNumber = 'رقم الهاتف';
   static const String age = 'العمر';
   static const String weight = 'الوزن';
+  static const String height = 'الطول';
   static const String chronicDiseases = 'الأمراض المزمنة';
   static const String bloodType = 'فصيلة الدم الخاصة بك';
   static const String userAddress = 'عنوانك';
@@ -77,6 +78,7 @@ class Strings {
 
   static const String home = 'الرئيسية';
   static const String profile = 'الملف الشخصي';
+  static const String yourDonations = 'طلباتك';
   static const String connect = 'الاتصالات';
   static const String whatDo = 'ما الذي';
   static const String youWantToSee = 'تريد أن تراه؟';
@@ -118,7 +120,7 @@ class Strings {
   static const String viewMyProfile = 'عرض ملفي الشخصي';
 
   static const String add = 'إضافة';
-  static const String experiments = 'تجارب';
+  static const String donations = 'التبرعات';
   static const String donationRequest = 'اضافة طلب تبرع';
   static const String visitors = 'جميع الزوار';
   static const String hiDhaval = 'مرحبًا! دهفال';
@@ -126,7 +128,11 @@ class Strings {
   static const String edit = 'تعديل';
   static const String save = 'حفظ';
   static const String superLeads = 'الزعماء الرئيسيين';
-  static const String addOrder = 'إضافة الطلب';
+  static const String yourOrders = 'طلبات التبرع الخاصة بك';
+  static const String donationWishes = 'رغبات التبرع من المستخدمين';
+  static const String allOrder = 'كل طلبات المتبرعين';
+  static const String userwishes = 'رغبات التبرع الخاصه بك';
+  static const String userOrder = 'طلبات التبرع الخاصه بك';
   static const String join = 'الانضمام';
   static const String connect_ = 'الاتصال';
   static const String payment_ = 'الدفع';

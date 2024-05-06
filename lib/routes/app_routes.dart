@@ -11,7 +11,7 @@
 class AppRoute {
   static const String LOGIN = '/login';
   static const String SPLASH = '/splash';
-  static const String SIGNUP = '/signup';
+  // static const String SIGNUP = '/signup';
   static const String TUTORIAL = '/tutorial';
   static const String FORGOT_PASSWORD = '/forgotpassword';
   static const String SUCCESSFULL = '/successfull';

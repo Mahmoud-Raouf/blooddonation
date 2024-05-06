@@ -27,12 +27,15 @@ getCurrentUseData() async {
   final CollectionReference documentReference = FirebaseFirestore.instance.collection("customUsers");
 
   final QuerySnapshot querySnapshot = await documentReference.where("uid", isEqualTo: uid).get();
+  if (querySnapshot.docs.isNotEmpty) {
+    // الحصول على أول وثيقة من نتائج الاستعلام
+    final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
 
-  // الحصول على أول وثيقة من نتائج الاستعلام
-  final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
-
-  final String name = documentSnapshot['name'];
-  return name;
+    final String name = documentSnapshot['name'];
+    return name;
+  } else {
+    return 'hospital'; // If no document is found, default to 'hospital'
+  }
 }
 
 Future<String> getclinicAppointmentsDocument() async {
@@ -42,13 +45,35 @@ Future<String> getclinicAppointmentsDocument() async {
 
   final QuerySnapshot querySnapshot = await documentReference.where("uid", isEqualTo: uid).get();
 
-  if (querySnapshot.docs.isEmpty) {
-    throw Exception("No documents found for user $uid");
+  if (querySnapshot.docs.isNotEmpty) {
+    final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
+    final String documentId = documentSnapshot.id;
+    return documentId;
+  } else {
+    return 'hospital'; // If no document is found, default to 'hospital'
   }
+}
 
-  final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
-  final String documentId = documentSnapshot.id;
-  return documentId;
+Future<String> getCurrentUserRole() async {
+  try {
+    final User user = _auth.currentUser!;
+    final uid = user.uid;
+
+    final CollectionReference documentReference = FirebaseFirestore.instance.collection("customUsers");
+
+    final QuerySnapshot querySnapshot = await documentReference.where("uid", isEqualTo: uid).get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
+      final String role = documentSnapshot['role'];
+      return role;
+    } else {
+      return 'hospital'; // If no document is found, default to 'hospital'
+    }
+  } catch (e) {
+    print('Error getting user role: $e');
+    return 'hospital'; // Return default role in case of any error
+  }
 }
 
 // جلب رقم الهاتف للمستخدم الحالي
@@ -58,12 +83,13 @@ Future<String> getCurrentUserNumberPhone() async {
   final CollectionReference documentReference = FirebaseFirestore.instance.collection("customUsers");
 
   final QuerySnapshot querySnapshot = await documentReference.where("uid", isEqualTo: uid).get();
-
-  final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
-
-  final String number = documentSnapshot['number'];
-
-  return number;
+  if (querySnapshot.docs.isNotEmpty) {
+    final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
+    final String number = documentSnapshot['number'];
+    return number;
+  } else {
+    return ''; // If no document is found, default to 'hospital'
+  }
 }
 
 Future<String> getCurrentUserAge() async {
@@ -72,12 +98,13 @@ Future<String> getCurrentUserAge() async {
   final CollectionReference documentReference = FirebaseFirestore.instance.collection("customUsers");
 
   final QuerySnapshot querySnapshot = await documentReference.where("uid", isEqualTo: uid).get();
-
-  final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
-
-  final String age = documentSnapshot['age'];
-
-  return age;
+  if (querySnapshot.docs.isNotEmpty) {
+    final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
+    final String age = documentSnapshot['age'];
+    return age;
+  } else {
+    return ''; // If no document is found, default to 'hospital'
+  }
 }
 
 Future<String> getCurrentUserWeight() async {
@@ -86,12 +113,28 @@ Future<String> getCurrentUserWeight() async {
   final CollectionReference documentReference = FirebaseFirestore.instance.collection("customUsers");
 
   final QuerySnapshot querySnapshot = await documentReference.where("uid", isEqualTo: uid).get();
+  if (querySnapshot.docs.isNotEmpty) {
+    final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
+    final String weight = documentSnapshot['weight'];
+    return weight;
+  } else {
+    return ''; // If no document is found, default to 'hospital'
+  }
+}
 
-  final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
+Future<String> getCurrentUserHeight() async {
+  final User user = _auth.currentUser!;
+  final uid = user.uid;
+  final CollectionReference documentReference = FirebaseFirestore.instance.collection("customUsers");
 
-  final String weight = documentSnapshot['weight'];
-
-  return weight;
+  final QuerySnapshot querySnapshot = await documentReference.where("uid", isEqualTo: uid).get();
+  if (querySnapshot.docs.isNotEmpty) {
+    final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
+    final String height = documentSnapshot['height'];
+    return height;
+  } else {
+    return ''; // If no document is found, default to 'hospital'
+  }
 }
 
 Future<String> getCurrentUserChronicDiseases() async {
@@ -100,12 +143,15 @@ Future<String> getCurrentUserChronicDiseases() async {
   final CollectionReference documentReference = FirebaseFirestore.instance.collection("customUsers");
 
   final QuerySnapshot querySnapshot = await documentReference.where("uid", isEqualTo: uid).get();
+  if (querySnapshot.docs.isNotEmpty) {
+    final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
 
-  final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
+    final String chronicDiseases = documentSnapshot['chronicDiseases'];
 
-  final String chronicDiseases = documentSnapshot['chronicDiseases'];
-
-  return chronicDiseases;
+    return chronicDiseases;
+  } else {
+    return ''; // If no document is found, default to 'hospital'
+  }
 }
 
 // جلب عدد زيارات المستخدم الحالي
@@ -115,12 +161,15 @@ Future<String> getCurrentUserLocation() async {
   final CollectionReference documentReference = FirebaseFirestore.instance.collection("customUsers");
 
   final QuerySnapshot querySnapshot = await documentReference.where("uid", isEqualTo: uid).get();
+  if (querySnapshot.docs.isNotEmpty) {
+    final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
 
-  final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
+    final String location = documentSnapshot['location'];
 
-  final String location = documentSnapshot['location'];
-
-  return location;
+    return location;
+  } else {
+    return ''; // If no document is found, default to 'hospital'
+  }
 }
 
 Future<String> getCurrentUserbloodType() async {
@@ -129,12 +178,15 @@ Future<String> getCurrentUserbloodType() async {
   final CollectionReference documentReference = FirebaseFirestore.instance.collection("customUsers");
 
   final QuerySnapshot querySnapshot = await documentReference.where("uid", isEqualTo: uid).get();
+  if (querySnapshot.docs.isNotEmpty) {
+    final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
 
-  final DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
+    final String bloodType = documentSnapshot['bloodType'];
 
-  final String bloodType = documentSnapshot['bloodType'];
-
-  return bloodType;
+    return bloodType;
+  } else {
+    return ''; // If no document is found, default to 'hospital'
+  }
 }
 
 // جلب معرف المستخدم الحالي
