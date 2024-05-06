@@ -49,6 +49,8 @@ class _SignUpState extends State<SignUp> {
   final _age = TextEditingController();
   final _weight = TextEditingController();
   final _height = TextEditingController();
+  bool isLoading = false;
+
   Future<void> signUp() async {
     bool passwordConfirmed() {
       if (_passwordController.text.trim() == _confirmPasswordController.text.trim()) {
@@ -172,120 +174,129 @@ class _SignUpState extends State<SignUp> {
           return Scaffold(
             appBar: NoAppBar(),
             backgroundColor: AppTheme.signupBodyColor,
-            body: GestureDetector(
-              onTap: () {
-                FocusScope.of(context).unfocus();
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(top: Constant.signupBodyTopPadding),
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      CustomAppBar(
-                          title: Strings.createAccount,
-                          space: Constant.SIZE50,
-                          onTap: () {
-                            Get.back();
-                          },
-                          leftPadding: Constant.signUpeAppbarLeftPadding,
-                          rightPadding: Constant.signUpeAppbarRightPadding,
-                          bottomPadding: Constant.signUpeAppbarBottomPadding),
-                      CustomTextFeild(
-                        controller: _nameController,
-                        hintText: Strings.username,
-                        prefixIcon: const Icon(
-                          Icons.person_4_outlined,
-                          color: AppTheme.colorblack87,
-                        ),
-                      ),
-                      CustomTextFeild(
-                        controller: _emailController,
-                        hintText: Strings.email,
-                        prefixIcon: const Icon(
-                          Icons.email_outlined,
-                          color: AppTheme.colorblack87,
-                        ),
-                      ),
-                      CustomTextFeild(
-                        controller: _numberController,
-                        hintText: Strings.phoneNumber,
-                        prefixIcon: const Icon(
-                          Icons.numbers,
-                          color: AppTheme.colorblack87,
-                        ),
-                      ),
-                      CustomTextFeild(
-                        controller: _weight,
-                        hintText: Strings.weight,
-                        prefixIcon: const Icon(
-                          Icons.numbers,
-                          color: AppTheme.colorblack87,
-                        ),
-                      ),
-                      CustomTextFeild(
-                        controller: _height,
-                        hintText: Strings.height,
-                        prefixIcon: const Icon(
-                          Icons.numbers,
-                          color: AppTheme.colorblack87,
-                        ),
-                      ),
-                      CustomTextFeild(
-                        controller: _age,
-                        hintText: Strings.age,
-                        prefixIcon: const Icon(
-                          Icons.numbers,
-                          color: AppTheme.colorblack87,
-                        ),
-                      ),
-                      CustomTextFeild(
-                        controller: _chronicDiseases,
-                        hintText: Strings.chronicDiseases,
-                        prefixIcon: const Icon(
-                          Icons.numbers,
-                          color: AppTheme.colorblack87,
-                        ),
-                      ),
-                      /*
+            body: isLoading
+                ? Center(
+                    child: CircularProgressIndicator(
+                    color: AppTheme.themeColor, // يمكنك استبدال "Colors.red" باللون الذي تفضله
+                  ))
+                : GestureDetector(
+                    onTap: () {
+                      FocusScope.of(context).unfocus();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: Constant.signupBodyTopPadding),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            CustomAppBar(
+                                title: Strings.createAccount,
+                                space: Constant.SIZE50,
+                                onTap: () {
+                                  Get.back();
+                                },
+                                leftPadding: Constant.signUpeAppbarLeftPadding,
+                                rightPadding: Constant.signUpeAppbarRightPadding,
+                                bottomPadding: Constant.signUpeAppbarBottomPadding),
+                            CustomTextFeild(
+                              controller: _nameController,
+                              hintText: Strings.username,
+                              prefixIcon: const Icon(
+                                Icons.person_4_outlined,
+                                color: AppTheme.colorblack87,
+                              ),
+                            ),
+                            CustomTextFeild(
+                              controller: _emailController,
+                              hintText: Strings.email,
+                              prefixIcon: const Icon(
+                                Icons.email_outlined,
+                                color: AppTheme.colorblack87,
+                              ),
+                            ),
+                            CustomTextFeild(
+                              controller: _numberController,
+                              hintText: Strings.phoneNumber,
+                              prefixIcon: const Icon(
+                                Icons.numbers,
+                                color: AppTheme.colorblack87,
+                              ),
+                            ),
+                            CustomTextFeild(
+                              controller: _weight,
+                              hintText: Strings.weight,
+                              prefixIcon: const Icon(
+                                Icons.numbers,
+                                color: AppTheme.colorblack87,
+                              ),
+                            ),
+                            CustomTextFeild(
+                              controller: _height,
+                              hintText: Strings.height,
+                              prefixIcon: const Icon(
+                                Icons.numbers,
+                                color: AppTheme.colorblack87,
+                              ),
+                            ),
+                            CustomTextFeild(
+                              controller: _age,
+                              hintText: Strings.age,
+                              prefixIcon: const Icon(
+                                Icons.numbers,
+                                color: AppTheme.colorblack87,
+                              ),
+                            ),
+                            CustomTextFeild(
+                              controller: _chronicDiseases,
+                              hintText: Strings.chronicDiseases,
+                              prefixIcon: const Icon(
+                                Icons.numbers,
+                                color: AppTheme.colorblack87,
+                              ),
+                            ),
+                            /*
   هذا الكود يقوم بإنشاء حقل إدخال (TextField) مخصص لإدخال عدد زيارات المستخدم للمدينة في شاشة تسجيل الدخول (SignUp).
   يحتوي الحقل على أيقونة تمثل عدد الزيارات ونص توضيحي للمستخدم.
 */
 
-                      CustomTextFeild(
-                        controller: _bloodTypeController, // يتم تحديد وحدة تحكم لهذا الحقل للوصول إلى القيمة المدخلة.
-                        hintText: Strings.bloodType, // نص توضيحي يظهر داخل حقل الإدخال.
-                        prefixIcon: const Icon(
-                          Icons.view_list, // أيقونة تمثل نوع البيانات المتوقع إدخالها (عدد الزيارات في هذه الحالة).
-                          color: AppTheme.colorblack38,
-                        ),
-                      ),
-                      CustomTextFeild(
-                        controller: _locationController, // يتم تحديد وحدة تحكم لهذا الحقل للوصول إلى القيمة المدخلة.
-                        hintText: Strings.userAddress, // نص توضيحي يظهر داخل حقل الإدخال.
-                        prefixIcon: const Icon(
-                          Icons.view_list, // أيقونة تمثل نوع البيانات المتوقع إدخالها (عدد الزيارات في هذه الحالة).
-                          color: AppTheme.colorblack38,
-                        ),
-                      ),
-                      CustomTextFeild(
-                        controller: _passwordController,
-                        hintText: Strings.password,
-                        prefixIcon: const Icon(
-                          Icons.password,
-                          color: AppTheme.colorblack38,
-                        ),
-                        isObscureText: singupController.passwordObsecured,
-                        suffixIcon: InkWell(
-                            onTap: () {
-                              singupController.passwordObsecured = !singupController.passwordObsecured;
-                              singupController.update();
-                            },
-                            child: Icon(
-                              singupController.passwordObsecured ? Icons.visibility_off : Icons.visibility,
-                              color: Colors.black38,
-                            )),
-                      ),
-                      /*
+                            CustomTextFeild(
+                              controller:
+                                  _bloodTypeController, // يتم تحديد وحدة تحكم لهذا الحقل للوصول إلى القيمة المدخلة.
+                              hintText: Strings.bloodType, // نص توضيحي يظهر داخل حقل الإدخال.
+                              prefixIcon: const Icon(
+                                Icons
+                                    .view_list, // أيقونة تمثل نوع البيانات المتوقع إدخالها (عدد الزيارات في هذه الحالة).
+                                color: AppTheme.colorblack38,
+                              ),
+                            ),
+                            CustomTextFeild(
+                              controller:
+                                  _locationController, // يتم تحديد وحدة تحكم لهذا الحقل للوصول إلى القيمة المدخلة.
+                              hintText: Strings.userAddress, // نص توضيحي يظهر داخل حقل الإدخال.
+                              prefixIcon: const Icon(
+                                Icons
+                                    .view_list, // أيقونة تمثل نوع البيانات المتوقع إدخالها (عدد الزيارات في هذه الحالة).
+                                color: AppTheme.colorblack38,
+                              ),
+                            ),
+                            CustomTextFeild(
+                              controller: _passwordController,
+                              hintText: Strings.password,
+                              prefixIcon: const Icon(
+                                Icons.password,
+                                color: AppTheme.colorblack38,
+                              ),
+                              isObscureText: singupController.passwordObsecured,
+                              suffixIcon: InkWell(
+                                  onTap: () {
+                                    singupController.passwordObsecured = !singupController.passwordObsecured;
+                                    singupController.update();
+                                  },
+                                  child: Icon(
+                                    singupController.passwordObsecured ? Icons.visibility_off : Icons.visibility,
+                                    color: Colors.black38,
+                                  )),
+                            ),
+                            /*
   هذا الكود يقوم بإنشاء حقل إدخال (TextField) مخصص لإعادة إدخال كلمة المرور في شاشة تسجيل الدخول (SignUp).
   يحتوي الحقل على أيقونة تمثل كلمة المرور وأيقونة تبديل لإظهار/إخفاء كلمة المرور، ونص توضيحي للمستخدم.
 
@@ -297,28 +308,28 @@ class _SignUpState extends State<SignUp> {
 
 */
 
-                      CustomTextFeild(
-                        controller: _confirmPasswordController, // وحدة التحكم للوصول إلى قيمة المدخلة.
-                        hintText: Strings.repeatPassword, // نص توضيحي يظهر داخل حقل الإدخال.
-                        prefixIcon: const Icon(
-                          Icons.password, // أيقونة تمثل نوع البيانات المتوقع إدخالها (كلمة المرور في هذه الحالة).
-                          color: AppTheme.colorblack38,
-                        ),
-                        suffixIcon: InkWell(
-                          onTap: () {
-                            // يتم تبديل حالة إخفاء/إظهار كلمة المرور.
-                            singupController.repeatpasswordObsecured = !singupController.repeatpasswordObsecured;
-                            singupController.update();
-                          },
-                          child: Icon(
-                            singupController.repeatpasswordObsecured ? Icons.visibility_off : Icons.visibility,
-                            color: AppTheme.colorblack38,
-                          ),
-                        ),
-                        isObscureText:
-                            singupController.repeatpasswordObsecured, // تحديد ما إذا كانت كلمة المرور مخفية أم لا.
-                      ),
-                      /*
+                            CustomTextFeild(
+                              controller: _confirmPasswordController, // وحدة التحكم للوصول إلى قيمة المدخلة.
+                              hintText: Strings.repeatPassword, // نص توضيحي يظهر داخل حقل الإدخال.
+                              prefixIcon: const Icon(
+                                Icons.password, // أيقونة تمثل نوع البيانات المتوقع إدخالها (كلمة المرور في هذه الحالة).
+                                color: AppTheme.colorblack38,
+                              ),
+                              suffixIcon: InkWell(
+                                onTap: () {
+                                  // يتم تبديل حالة إخفاء/إظهار كلمة المرور.
+                                  singupController.repeatpasswordObsecured = !singupController.repeatpasswordObsecured;
+                                  singupController.update();
+                                },
+                                child: Icon(
+                                  singupController.repeatpasswordObsecured ? Icons.visibility_off : Icons.visibility,
+                                  color: AppTheme.colorblack38,
+                                ),
+                              ),
+                              isObscureText: singupController
+                                  .repeatpasswordObsecured, // تحديد ما إذا كانت كلمة المرور مخفية أم لا.
+                            ),
+                            /*
   هذا الكود يقوم بإنشاء عنصر واجهة المستخدم لعرض نص توضيحي مُنسّق بشكل غني (Rich Text) في شاشة تسجيل الدخول (SignUp).
   يتضمن النص عبارة "By continuing you agree" مع روابط للشروط والخدمة وسياسة الخصوصية.
 
@@ -328,62 +339,69 @@ class _SignUpState extends State<SignUp> {
   - children: تُستخدم لإضافة عناصر تنسيق إضافية مثل روابط الشروط والخدمة وسياسة الخصوصية.
 */
 
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          left: Constant.termsTextLeftPadding,
-                          right: Constant.termsTextRightPadding,
-                          top: Constant.termsTextTopPadding,
-                          bottom: Constant.termsTextBottomPadding,
-                        ),
-                        child: RichText(
-                          textAlign: TextAlign.center, // توجيه النص إلى وسط العنصر.
-                          text: TextSpan(
-                            text: Strings.byContinuingYouAgree, // النص الرئيسي.
-                            style: const TextStyle(
-                              color: AppTheme.colorblack38,
-                              fontWeight: FontWeight.bold,
-                              fontSize: Constant.termsTextSize,
-                              height: Constant.termsTextHeight,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: Strings.termsOfService, // رابط الشروط والخدمة.
-                                style: TextStyle(
-                                  color: AppTheme.themeColor,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: Strings.and, // النص "و".
-                                    style: const TextStyle(
-                                      color: AppTheme.colorblack38,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    children: [
-                                      TextSpan(
-                                        text: Strings.privacyPolicy, // رابط سياسة الخصوصية.
-                                        style: TextStyle(
-                                          color: AppTheme.themeColor,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                left: Constant.termsTextLeftPadding,
+                                right: Constant.termsTextRightPadding,
+                                top: Constant.termsTextTopPadding,
+                                bottom: Constant.termsTextBottomPadding,
                               ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      CustomButton(
-                        backgroundColor: AppTheme.themeColor,
-                        borderColor: AppTheme.themeColor,
-                        buttonTitle: Strings.signUp,
-                        height: Constant.customButtonHeight,
-                        textColor: AppTheme.colorWhite,
-                        onTap: () {
-                          signUp();
-                        },
-                      ),
-                      /*
+                              child: RichText(
+                                textAlign: TextAlign.center, // توجيه النص إلى وسط العنصر.
+                                text: TextSpan(
+                                  text: Strings.byContinuingYouAgree, // النص الرئيسي.
+                                  style: const TextStyle(
+                                    color: AppTheme.colorblack38,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: Constant.termsTextSize,
+                                    height: Constant.termsTextHeight,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: Strings.termsOfService, // رابط الشروط والخدمة.
+                                      style: TextStyle(
+                                        color: AppTheme.themeColor,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: Strings.and, // النص "و".
+                                          style: const TextStyle(
+                                            color: AppTheme.colorblack38,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          children: [
+                                            TextSpan(
+                                              text: Strings.privacyPolicy, // رابط سياسة الخصوصية.
+                                              style: TextStyle(
+                                                color: AppTheme.themeColor,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            CustomButton(
+                              backgroundColor: AppTheme.themeColor,
+                              borderColor: AppTheme.themeColor,
+                              buttonTitle: Strings.signUp,
+                              height: Constant.customButtonHeight,
+                              textColor: AppTheme.colorWhite,
+                              onTap: () {
+                                setState(() {
+                                  isLoading = true; // تغيير حالة التحميل لتظهر علامة التحميل
+                                });
+                                signUp().then((_) {
+                                  setState(() {
+                                    isLoading = false; // تغيير حالة التحميل لإخفاء علامة التحميل
+                                  });
+                                });
+                              },
+                            ),
+                            /*
   هذا الكود يُنشئ عنصر InkWell لتحويل المستخدم إلى صفحة تسجيل الدخول عند النقر عليه.
   يحتوي العنصر على عناصر أخرى مثل CustomText لعرض رسالة تحتوي على رابط "Already account" ونص "Login now".
 
@@ -398,43 +416,43 @@ class _SignUpState extends State<SignUp> {
 
 */
 
-                      InkWell(
-                        highlightColor: AppTheme.colorTransprant,
-                        splashColor: AppTheme.colorTransprant,
-                        onTap: () {
-                          Get.toNamed(AppRoute.LOGIN); // تحويل المستخدم إلى صفحة تسجيل الدخول.
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center, // وسط النصوص في الصف.
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: Constant.alreadyMamberTextPadding),
-                              child: CustomText(
-                                title: Strings.alreadyAccount,
-                                fontfamily: Strings.emptyString,
-                                fontWight: FontWeight.bold,
-                                color: AppTheme.colorblack38,
-                                fontSize: Constant.alreadyMamberTextSize,
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: Constant.alreadyMamberTextPadding),
-                              child: CustomText(
-                                title: Strings.loginNew,
-                                fontfamily: Strings.emptyString,
-                                fontSize: Constant.alreadyMamberTextSize,
-                                fontWight: FontWeight.bold,
-                                color: AppTheme.themeColor,
+                            InkWell(
+                              highlightColor: AppTheme.colorTransprant,
+                              splashColor: AppTheme.colorTransprant,
+                              onTap: () {
+                                Get.toNamed(AppRoute.LOGIN); // تحويل المستخدم إلى صفحة تسجيل الدخول.
+                              },
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center, // وسط النصوص في الصف.
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: Constant.alreadyMamberTextPadding),
+                                    child: CustomText(
+                                      title: Strings.alreadyAccount,
+                                      fontfamily: Strings.emptyString,
+                                      fontWight: FontWeight.bold,
+                                      color: AppTheme.colorblack38,
+                                      fontSize: Constant.alreadyMamberTextSize,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: Constant.alreadyMamberTextPadding),
+                                    child: CustomText(
+                                      title: Strings.loginNew,
+                                      fontfamily: Strings.emptyString,
+                                      fontSize: Constant.alreadyMamberTextSize,
+                                      fontWight: FontWeight.bold,
+                                      color: AppTheme.themeColor,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            ),
           );
         });
   }

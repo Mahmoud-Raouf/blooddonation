@@ -23,6 +23,7 @@ class _LoginState extends State<Login> {
   double? height;
   double? width;
   final loginController = Get.put(LoginController());
+  bool isLoading = false;
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -66,115 +67,127 @@ class _LoginState extends State<Login> {
         builder: (cont) {
           // Scaffold كإطار لتصميم الصفحة
           return Scaffold(
-            body: GestureDetector(
-              onTap: () {
-                // إخفاء لوحة المفاتيح عند النقر في أي مكان خارج حقول الإدخال
-                FocusScope.of(context).unfocus();
-              },
-              child: Container(
-                color: AppTheme.loginPageColor,
-                height: height,
-                width: width,
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      // شعار التطبيق
-                      AppLogo(),
-
-                      // حقل إدخال للبريد الإلكتروني
-                      CustomTextFeild(
-                          hintText: Strings.enterUserName,
-                          controller: _emailController,
-                          prefixIcon: const Icon(
-                            Icons.person_4_outlined,
-                            color: AppTheme.textFieldIconColor,
-                          )),
-
-                      // حقل إدخال لكلمة المرور
-                      CustomTextFeild(
-                          controller: _passwordController,
-                          prefixIcon: const Icon(
-                            Icons.password,
-                            color: AppTheme.textFieldIconColor,
-                          ),
-                          hintText: Strings.password,
-                          // إظهار أو إخفاء كلمة المرور
-                          isObscureText: loginController.isVisible,
-                          suffixIcon: InkWell(
-                            onTap: () {
-                              // تحديث حالة الرؤية لكلمة المرور
-                              loginController.isVisible = !loginController.isVisible;
-                              loginController.update();
-                            },
-                            child: Icon(
-                              loginController.isVisible ? Icons.visibility : Icons.visibility_off,
-                              color: Colors.black45,
-                            ),
-                          )),
-
-                      // زر تسجيل الدخول
-                      CustomButton(
-                        backgroundColor: AppTheme.customButtonBgColor,
-                        borderColor: AppTheme.customButtonBgColor,
-                        buttonTitle: Strings.login,
-                        height: Constant.customButtonHeight,
-                        onTap: () {
-                          signIn();
-                        },
-                        textColor: AppTheme.colorWhite,
-                      ),
-
-                      // إذا كانت هناك رسالة خطأ، قم بعرضها
-                      if (_loginErrorMessage != null)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: Text(
-                            _loginErrorMessage!,
-                            style: const TextStyle(
-                              color: Colors.red,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-
-                      // رابط لصفحة التسجيل
-                      InkWell(
-                        highlightColor: AppTheme.colorTransprant,
-                        splashColor: AppTheme.colorTransprant,
-                        onTap: () {
-                          Get.to(const SignUp());
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+            body: isLoading
+                ? Center(
+                    child: CircularProgressIndicator(
+                    color: AppTheme.themeColor, // يمكنك استبدال "Colors.red" باللون الذي تفضله
+                  ))
+                : GestureDetector(
+                    onTap: () {
+                      // إخفاء لوحة المفاتيح عند النقر في أي مكان خارج حقول الإدخال
+                      FocusScope.of(context).unfocus();
+                    },
+                    child: Container(
+                      color: AppTheme.loginPageColor,
+                      height: height,
+                      width: width,
+                      child: SingleChildScrollView(
+                        child: Column(
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: Constant.notMamberTopPadding),
-                              child: CustomText(
-                                title: Strings.notAMember,
-                                fontfamily: Strings.emptyString,
-                                fontWight: FontWeight.bold,
-                                color: AppTheme.colorblack38,
-                                fontSize: Constant.notMamberTextSize,
-                              ),
+                            // شعار التطبيق
+                            AppLogo(),
+
+                            // حقل إدخال للبريد الإلكتروني
+                            CustomTextFeild(
+                                hintText: Strings.enterUserName,
+                                controller: _emailController,
+                                prefixIcon: const Icon(
+                                  Icons.person_4_outlined,
+                                  color: AppTheme.textFieldIconColor,
+                                )),
+
+                            // حقل إدخال لكلمة المرور
+                            CustomTextFeild(
+                                controller: _passwordController,
+                                prefixIcon: const Icon(
+                                  Icons.password,
+                                  color: AppTheme.textFieldIconColor,
+                                ),
+                                hintText: Strings.password,
+                                // إظهار أو إخفاء كلمة المرور
+                                isObscureText: loginController.isVisible,
+                                suffixIcon: InkWell(
+                                  onTap: () {
+                                    // تحديث حالة الرؤية لكلمة المرور
+                                    loginController.isVisible = !loginController.isVisible;
+                                    loginController.update();
+                                  },
+                                  child: Icon(
+                                    loginController.isVisible ? Icons.visibility : Icons.visibility_off,
+                                    color: Colors.black45,
+                                  ),
+                                )),
+
+                            // زر تسجيل الدخول
+                            CustomButton(
+                              backgroundColor: AppTheme.customButtonBgColor,
+                              borderColor: AppTheme.customButtonBgColor,
+                              buttonTitle: Strings.login,
+                              height: Constant.customButtonHeight,
+                              onTap: () {
+                                setState(() {
+                                  isLoading = true; // تغيير حالة التحميل لتظهر علامة التحميل
+                                });
+                                signIn().then((_) {
+                                  setState(() {
+                                    isLoading = false; // تغيير حالة التحميل لإخفاء علامة التحميل
+                                  });
+                                });
+                              },
+                              textColor: AppTheme.colorWhite,
                             ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: Constant.notMamberTopPadding),
-                              child: CustomText(
-                                title: Strings.registerNow,
-                                fontfamily: Strings.emptyString,
-                                fontWight: FontWeight.bold,
-                                color: AppTheme.themeColor,
-                                fontSize: Constant.notMamberTextSize,
+
+                            // إذا كانت هناك رسالة خطأ، قم بعرضها
+                            if (_loginErrorMessage != null)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                child: Text(
+                                  _loginErrorMessage!,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+
+                            // رابط لصفحة التسجيل
+                            InkWell(
+                              highlightColor: AppTheme.colorTransprant,
+                              splashColor: AppTheme.colorTransprant,
+                              onTap: () {
+                                Get.to(const SignUp());
+                              },
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: Constant.notMamberTopPadding),
+                                    child: CustomText(
+                                      title: Strings.notAMember,
+                                      fontfamily: Strings.emptyString,
+                                      fontWight: FontWeight.bold,
+                                      color: AppTheme.colorblack38,
+                                      fontSize: Constant.notMamberTextSize,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: Constant.notMamberTopPadding),
+                                    child: CustomText(
+                                      title: Strings.registerNow,
+                                      fontfamily: Strings.emptyString,
+                                      fontWight: FontWeight.bold,
+                                      color: AppTheme.themeColor,
+                                      fontSize: Constant.notMamberTextSize,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            ),
           );
         });
   }
