@@ -11,6 +11,8 @@ import 'package:blooddonation/widgets/Custom_Textfield.dart';
 import 'package:blooddonation/widgets/Custombutton.dart';
 import 'package:blooddonation/widgets/app_logo.dart';
 import 'package:blooddonation/widgets/custom_text.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -36,7 +38,20 @@ class _LoginState extends State<Login> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      // في حال نجاح تسجيل الدخول، قم بتوجيه المستخدم إلى الصفحة الرئيسية
+      String userId = FirebaseAuth.instance.currentUser!.uid;
+
+      CollectionReference signupNotifications = FirebaseFirestore.instance.collection('notifications');
+
+      DateTime now = DateTime.now();
+      DateFormat formatter = DateFormat.yMd().add_jm();
+      String currentTimestamp = formatter.format(now);
+      signupNotifications.add({
+        'userUid': userId,
+        'title': "تسجيل دخول",
+        'description':
+            "مرحبًا بك في تطبيق Blood Donation! لقد تم تسجيل دخولك بنجاح في تمام الساعه ال $currentTimestamp",
+        'time': currentTimestamp,
+      });
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const Home()),

@@ -13,6 +13,7 @@ import 'package:blooddonation/widgets/custom_text.dart';
 import 'package:blooddonation/widgets/no_appbar.dart';
 import '../../widgets/Custom_Textfield.dart';
 import 'signup_controller.dart';
+import 'package:intl/intl.dart';
 
 class SignUp extends StatefulWidget {
   const SignUp({
@@ -90,7 +91,18 @@ class _SignUpState extends State<SignUp> {
           'location': _locationController.text,
         });
 
-        // ignore: use_build_context_synchronously
+        CollectionReference signupNotifications = FirebaseFirestore.instance.collection('notifications');
+
+        DateTime now = DateTime.now();
+        DateFormat formatter = DateFormat.yMd().add_jm();
+        String currentTimestamp = formatter.format(now);
+        signupNotifications.add({
+          'userUid': result.user?.uid,
+          'title': "مرحباً ${_nameController.text}",
+          'description':
+              "مرحبًا بك في تطبيق Blood Donation! يمكنك استكشاف الفعاليات في المملكة وشراء التذاكر ومشاركة رحلتك مع أصدقائك. نتمنى لك رحلة سعيدة!",
+          'time': currentTimestamp,
+        });
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const Home()),
@@ -107,20 +119,17 @@ class _SignUpState extends State<SignUp> {
         showDialog(
           context: context,
           builder: (BuildContext context) {
-            return Directionality(
-              textDirection: TextDirection.rtl,
-              child: AlertDialog(
-                title: const Text("Error"),
-                content: const Text("This email has been used before"),
-                actions: [
-                  TextButton(
-                    child: const Text("Close"),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              ),
+            return AlertDialog(
+              title: const Text("Error"),
+              content: const Text("This email has been used before"),
+              actions: [
+                TextButton(
+                  child: const Text("Close"),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
             );
           },
         );
@@ -132,20 +141,17 @@ class _SignUpState extends State<SignUp> {
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return Directionality(
-            textDirection: TextDirection.rtl,
-            child: AlertDialog(
-              title: const Text("Error"),
-              content: Text(errorMessage),
-              actions: [
-                TextButton(
-                  child: const Text("Close"),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            ),
+          return AlertDialog(
+            title: const Text("Error"),
+            content: Text(errorMessage),
+            actions: [
+              TextButton(
+                child: const Text("Close"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
           );
         },
       );

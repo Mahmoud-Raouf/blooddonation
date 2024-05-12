@@ -68,6 +68,7 @@ class _DonationRequestState extends State<DonationRequest> {
   final bloodType = TextEditingController();
   final date = TextEditingController();
   final description = TextEditingController();
+  final status = TextEditingController();
   final numberDonorsRequired = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   DateTime? _selectedDate;
@@ -83,6 +84,7 @@ class _DonationRequestState extends State<DonationRequest> {
       'date': _selectedDate,
       'bloodGroups': bloodType.text,
       'hospitalUid': userId,
+      'status': status,
       'numberDonorsRequired': parsedNumberDonorsRequired,
       'description': description.text,
     });
@@ -226,7 +228,7 @@ class _DonationRequestState extends State<DonationRequest> {
                   // بناء شريط عنوان مخصص
                   leftPadding: 15, // تحديد تباعد من اليسار
                   bottomPadding: 10, // تحديد تباعد من الأسفل
-                  title: Strings.allOrder, // تحديد عنوان الشريط
+                  title: "إضافة طلب تبرع", // تحديد عنوان الشريط
                   space: Constant.SIZE15, // تحديد المسافة بين العناصر
                   onTap: () {
                     // إضافة تفاعل عند النقر
@@ -280,6 +282,14 @@ class _DonationRequestState extends State<DonationRequest> {
                           onChanged: (newValue) => newValue,
                         ),
                         CustomTextFeild(
+                          controller: status,
+                          hintText: "حالة الطلب : طارئة ام فقط نقص",
+                          hintSize: 16,
+                          contentRightPadding: 10,
+                          onTap: () {},
+                          onChanged: (newValue) => newValue,
+                        ),
+                        CustomTextFeild(
                           controller: numberDonorsRequired,
                           hintText: "عدد المتبرعين المطلوب :",
                           hintSize: 16,
@@ -302,21 +312,60 @@ class _DonationRequestState extends State<DonationRequest> {
                               ),
                               child: const Text('تحديد موعد التبرع'), // إضافة نص للزر
                               onPressed: () async {
-                                // إضافة تفاعل عند النقر
-                                // Show the date picker
                                 DateTime? selectedDate = await showDatePicker(
-                                  // عرض المنتقى التاريخ
                                   context: context,
                                   initialDate: DateTime.now(),
                                   firstDate: DateTime(2000),
                                   lastDate: DateTime(2100),
+                                  builder: (BuildContext context, Widget? child) {
+                                    return Theme(
+                                      data: ThemeData(
+                                        colorScheme:
+                                            ColorScheme.fromSwatch(primarySwatch: Colors.red), // تعيين اللون الأحمر
+                                        dialogBackgroundColor: Colors.red[50], // خلفية الحوار بلون أحمر فاتح
+                                        buttonTheme: const ButtonThemeData(
+                                          textTheme:
+                                              ButtonTextTheme.primary, // لون النص يتم تغييره أيضًا إلى اللون الأحمر
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
                                 );
 
-                                // Update the selected date
-                                setState(() {
-                                  // تحديث الحالة
-                                  _selectedDate = selectedDate ?? _selectedDate; // تحديد التاريخ المحدد أو السابق
-                                });
+                                if (selectedDate != null) {
+                                  TimeOfDay? selectedTime = await showTimePicker(
+                                    context: context,
+                                    initialTime: TimeOfDay.now(),
+                                    builder: (BuildContext context, Widget? child) {
+                                      return Theme(
+                                        data: ThemeData(
+                                          colorScheme:
+                                              ColorScheme.fromSwatch(primarySwatch: Colors.red), // تعيين اللون الأحمر
+                                          dialogBackgroundColor: Colors.red[50], // خلفية الحوار بلون أحمر فاتح
+                                          buttonTheme: const ButtonThemeData(
+                                            textTheme:
+                                                ButtonTextTheme.primary, // لون النص يتم تغييره أيضًا إلى اللون الأحمر
+                                          ),
+                                        ),
+                                        child: child!,
+                                      );
+                                    },
+                                  );
+
+                                  if (selectedTime != null) {
+                                    // تحديث الحالة إذا تم اختيار التاريخ والوقت
+                                    setState(() {
+                                      _selectedDate = DateTime(
+                                        selectedDate.year,
+                                        selectedDate.month,
+                                        selectedDate.day,
+                                        selectedTime.hour,
+                                        selectedTime.minute,
+                                      );
+                                    });
+                                  }
+                                }
                               }),
                         ),
                         // زر لإضافة التجربة
@@ -435,7 +484,7 @@ class _DonationRequestState extends State<DonationRequest> {
 
                               // تحويل التاريخ لنص
                               DateTime now2 = data['time']?.toDate() ?? DateTime.now();
-                              DateFormat formatter2 = DateFormat.yMd().add_jm();
+                              DateFormat formatter2 = DateFormat.yMd();
                               String time = formatter2.format(now2);
 
                               return Stack(
@@ -875,6 +924,7 @@ class _DonationRequestState extends State<DonationRequest> {
                               String userChronicDiseases = data['userChronicDiseases'];
                               String userHeight = data['userHeight'];
                               String userWeight = data['userWeight'];
+                              String userUid = data['userUid'];
                               String status = data['status'];
                               String documentDetailuid = document.id; // معرف الوثيقة
 
@@ -1045,6 +1095,20 @@ class _DonationRequestState extends State<DonationRequest> {
                                                                       documentRef.update({
                                                                         'status': 'Accepted', // تحديث الحالة
                                                                       });
+                                                                      CollectionReference signupNotifications =
+                                                                          FirebaseFirestore.instance
+                                                                              .collection('notifications');
+
+                                                                      DateTime now = DateTime.now();
+                                                                      DateFormat formatter = DateFormat.yMd().add_jm();
+                                                                      String currentTimestamp = formatter.format(now);
+                                                                      signupNotifications.add({
+                                                                        'userUid': userUid,
+                                                                        'title': "قبول طلب تبرع",
+                                                                        'description':
+                                                                            "لقد تم قبول طلب تبرعك في مستشفي بنجاح يرجى الاطلاع على طلبات تبرعك والتوجة للمستشفي في اسرع وقت",
+                                                                        'time': currentTimestamp,
+                                                                      });
                                                                     }
 
                                                                     appointmentsAccepted(); // تحديث الحالة
@@ -1095,6 +1159,20 @@ class _DonationRequestState extends State<DonationRequest> {
                                                                           mainCollectionRef.doc(documentDetailuid);
 
                                                                       await documentRef.delete(); // حذف الوثيقة
+                                                                      CollectionReference signupNotifications =
+                                                                          FirebaseFirestore.instance
+                                                                              .collection('notifications');
+
+                                                                      DateTime now = DateTime.now();
+                                                                      DateFormat formatter = DateFormat.yMd().add_jm();
+                                                                      String currentTimestamp = formatter.format(now);
+                                                                      signupNotifications.add({
+                                                                        'userUid': userUid,
+                                                                        'title': "رفض طلب تبرع",
+                                                                        'description':
+                                                                            "لقد تم رفض طلب تبرعك في مستشفي  يرجى الاطلاع على طلبات تبرعك الاخرى واختيار ما يتناسب معك",
+                                                                        'time': currentTimestamp,
+                                                                      });
                                                                     }
 
                                                                     appointmentsAccepted(); // استدعاء دالة حذف الطلب
@@ -1148,6 +1226,20 @@ class _DonationRequestState extends State<DonationRequest> {
                                                                       mainCollectionRef.doc(documentDetailuid);
 
                                                                   await documentRef.delete(); // حذف الوثيقة
+                                                                  CollectionReference signupNotifications =
+                                                                      FirebaseFirestore.instance
+                                                                          .collection('notifications');
+
+                                                                  DateTime now = DateTime.now();
+                                                                  DateFormat formatter = DateFormat.yMd().add_jm();
+                                                                  String currentTimestamp = formatter.format(now);
+                                                                  signupNotifications.add({
+                                                                    'userUid': userUid,
+                                                                    'title': "إلغاء طلب تبرع",
+                                                                    'description':
+                                                                        "لقد تم إلغاء طلب تبرعك في مستشفي  يرجى الاطلاع على طلبات تبرعك الاخرى واختيار ما يتناسب معك",
+                                                                    'time': currentTimestamp,
+                                                                  });
                                                                 }
 
                                                                 appointmentsAccepted(); // استدعاء دالة حذف الطلب

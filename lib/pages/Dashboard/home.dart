@@ -71,6 +71,14 @@ class _HomeState extends State<Home> {
     return randomNumber; // إرجاع الرقم العشوائي المولّد
   }
 
+  void deleteDocument(String documentId) {
+    FirebaseFirestore.instance.collection('notifications').doc(documentId).delete().then((_) {
+      print("تم حذف الوثيقة بنجاح!");
+    }).catchError((error) {
+      print("حدث خطأ أثناء حذف الوثيقة: $error");
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -154,6 +162,8 @@ class _HomeState extends State<Home> {
                 return const DonationRequest(); // عرض واجهة الصفحة "Connect"
               case Constant.INT_FOUR:
                 return allDonationRequests(); // عرض واجهة قائمة الحجوزات
+              case Constant.INT_UserNotification:
+                return userNotification(); // عرض واجهة تفاصيل مكان
 
               default:
                 return _home();
@@ -212,18 +222,6 @@ class _HomeState extends State<Home> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween, // تنظيم العناصر بشكل أفقي بين الحواف
                   children: [
-                    CircleAvatar(
-                      radius: Constant.circleImageRadius, // نصف قطر الصورة الدائرية
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.exit_to_app,
-                          color: AppTheme.colorRed,
-                        ), // أيقونة خروج
-                        onPressed: () {
-                          _signOut(context); // استدعاء دالة الخروج عند النقر
-                        },
-                      ),
-                    ),
                     Column(
                       mainAxisAlignment: MainAxisAlignment.start, // محاذاة العناصر إلى الأعلى
                       crossAxisAlignment: CrossAxisAlignment.start, // محاذاة العناصر إلى اليسار
@@ -243,6 +241,33 @@ class _HomeState extends State<Home> {
                               : Strings.youWantToGo, // نص العنصر الثاني يعتمد على حالة البحث
                           fontfamily: Strings.emptyString, // نوع الخط
                         ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: Constant.circleImageRadius, // نصف قطر الصورة الدائرية
+                          child: IconButton(
+                            icon: const Icon(Icons.exit_to_app), // أيقونة خروج
+                            onPressed: () {
+                              _signOut(context); // استدعاء دالة الخروج عند النقر
+                            },
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        CircleAvatar(
+                          radius: Constant.circleImageRadius, // نصف قطر الصورة الدائرية
+                          child: IconButton(
+                            color: Colors.red,
+                            icon: const Icon(Icons.notification_important), // أيقونة خروج
+                            onPressed: () {
+                              homeController.index = Constant.INT_UserNotification;
+                              homeController.update();
+                            },
+                          ),
+                        )
                       ],
                     ),
                   ],
@@ -367,6 +392,181 @@ class _HomeState extends State<Home> {
     );
   }
 
+  userNotification() {
+    return Scaffold(
+      appBar: NoAppBar(),
+      body: Padding(
+        padding: const EdgeInsets.only(
+          left: Constant.bookingTileLeftPadding,
+          right: Constant.bookingTileRightPadding,
+        ),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Padding(
+            padding: Constant.constantPadding(Constant.SIZE100 / 2),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 300),
+              child: Column(
+                children: [
+                  CustomAppBar(
+                    title: "الإشعارات",
+                    space: Constant.SIZE15,
+                    leftPadding: 15,
+                    bottomPadding: 10,
+                    onTap: () {
+                      // تحديث حالة التطبيق عند النقر على شريط العنوان
+                      homeController.index = Constant.INT_ONE;
+                      homeController.update();
+                    },
+                  ),
+                  SizedBox(
+                    height: height * Constant.searchBodyHeight,
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('notifications')
+                          .where('userUid', isEqualTo: userId)
+                          .snapshots(),
+                      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                        if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        }
+
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const CircularProgressIndicator();
+                        }
+
+                        if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+                          // عرض قائمة الأماكن السياحية
+                          return ListView.builder(
+                            padding: EdgeInsets.only(
+                              left: Constant.searchTileListLeftPadding,
+                              bottom: height * Constant.searchTileListBottomPadding,
+                              right: Constant.searchTileListRightPadding,
+                              top: Constant.searchTileListTopPadding,
+                            ),
+                            itemCount: snapshot.data!.docs.length,
+                            itemBuilder: (context, index) {
+                              DocumentSnapshot document = snapshot.data!.docs[index];
+                              Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+                              String title = data['title'] ?? '';
+                              String description = data['description'] ?? '';
+                              String time = data['time'] ?? '';
+                              String documentuid = document.id;
+
+                              return Stack(
+                                children: [
+                                  // تأثير زجاجي خلفي للعنصر
+                                  BackdropFilter(
+                                    filter: ImageFilter.blur(sigmaX: Constant.blurSigmaX, sigmaY: Constant.blurSigmaY),
+                                  ),
+
+                                  InkWell(
+                                    onTap: () {
+                                      // إخفاء لوحة المفاتيح عند النقر على العنصر
+                                      FocusScope.of(context).unfocus();
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.all(Constant.searchTileMargin),
+                                      padding: const EdgeInsets.only(bottom: Constant.searchTileContentBottomPadding),
+                                      decoration: Constant.boxDecoration,
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          // معلومات الأماكن السياحية
+                                          Padding(
+                                            padding: const EdgeInsets.only(right: 8.0),
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.start,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                const SizedBox(
+                                                  height: 20,
+                                                ),
+                                                // عنوان الأماكن السياحية
+
+                                                CustomText(
+                                                  title: title,
+                                                  fontSize: width * 0.033,
+                                                  color: AppTheme.colorblack,
+                                                  fontWight: FontWeight.w900,
+                                                ),
+
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: Constant.tripCardLocationPadding),
+                                                  child: SizedBox(
+                                                    width: width * 0.73,
+                                                    child: CustomText(
+                                                      title: description,
+                                                      fontSize: width * 0.037,
+                                                      color: Colors.black87,
+                                                      height: 1.3,
+                                                      fontWight: FontWeight.w400,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: Constant.tripCardLocationPadding),
+                                                  child: SizedBox(
+                                                    width: width * 0.7,
+                                                    child: CustomText(
+                                                      title: 'بتاريخ : $time',
+                                                      fontSize: width * 0.031,
+                                                      color: Colors.black87,
+                                                      fontWight: FontWeight.w400,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(right: 10.0),
+                                            child: IconButton(
+                                              icon: const Icon(
+                                                Icons.delete,
+                                                color: Colors.red,
+                                              ),
+                                              onPressed: () {
+                                                deleteDocument(document.id);
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        } else {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 200.0),
+                            child: SizedBox(
+                              child: CustomText(
+                                title: 'ليس لديك إشعارات حتى الأن ',
+                                fontSize: 13,
+                                color: Colors.black87,
+                                fontWight: FontWeight.w400,
+                              ),
+                            ),
+                          ); // التعامل مع حالة عدم وجود بيانات
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 200,
+                  )
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   allDonationRequests() {
     return Scaffold(
       backgroundColor: AppTheme.colorTransprant,
@@ -396,59 +596,66 @@ class _HomeState extends State<Home> {
                       homeController.update();
                     },
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 30,
-                    ),
-                    child: SizedBox(
-                      width: width * 0.7,
-                      child: CustomButton(
-                        backgroundColor: AppTheme.themeColor,
-                        borderColor: AppTheme.themeColor,
-                        // width: 50,
-                        buttonTitle: "إرسال طلب تبرع",
-                        height: Constant.customButtonHeight / 1.5,
-                        textColor: AppTheme.colorWhite,
-                        onTap: () async {
-                          Future deleteDonation() async {
-                            CollectionReference donationRequestRef =
-                                FirebaseFirestore.instance.collection('freeDonationRequest');
+                  userRole != 'hospital'
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 30,
+                          ),
+                          child: SizedBox(
+                            width: width * 0.7,
+                            child: CustomButton(
+                              backgroundColor: AppTheme.themeColor,
+                              borderColor: AppTheme.themeColor,
+                              // width: 50,
+                              buttonTitle: "إرسال طلب تبرع",
+                              height: Constant.customButtonHeight / 1.5,
+                              textColor: AppTheme.colorWhite,
+                              onTap: () async {
+                                Future deleteDonation() async {
+                                  CollectionReference donationRequestRef =
+                                      FirebaseFirestore.instance.collection('freeDonationRequest');
 
-                            DateTime now = DateTime.now();
-                            Timestamp currentTimestamp = Timestamp.fromDate(now);
+                                  DateTime now = DateTime.now();
+                                  DateTime currentTimestamp = DateTime(
+                                      now.year, now.month, now.day); // يتم استخدام هذا للحصول على تاريخ بدون وقت
+                                  String formattedDate = currentTimestamp
+                                      .toLocal()
+                                      .toIso8601String()
+                                      .substring(0, 10); // يتم استخدام substring للحصول على التاريخ فقط بدون الوقت
 
-                            try {
-                              donationRequestRef.add({
-                                'status': 'panding',
-                                'userUid': userId,
-                                'userName': userName,
-                                'userEmail': userEmail,
-                                'userBloodType': userBloodType,
-                                'userAge': userAge,
-                                'userWeight': userWeight,
-                                'userHeight': userHeight,
-                                'userChronicDiseases': userChronicDiseases,
-                                'time': currentTimestamp,
-                                'hospitalUID': hospitalSelectedUid,
-                              });
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  duration: Duration(seconds: 3),
-                                  showCloseIcon: true,
-                                  content: Text("تم إرسال طلب التبرع بنجاح "),
-                                ),
-                              );
-                            } catch (e) {
-                              print('Error deleting donation request: $e');
-                              // Handle the error accordingly
-                            }
-                          }
+                                  try {
+                                    donationRequestRef.add({
+                                      'status': 'panding',
+                                      'userUid': userId,
+                                      'userName': userName,
+                                      'userEmail': userEmail,
+                                      'userBloodType': userBloodType,
+                                      'userAge': userAge,
+                                      'userWeight': userWeight,
+                                      'userHeight': userHeight,
+                                      'userChronicDiseases': userChronicDiseases,
+                                      'time': formattedDate,
+                                      'hospitalUID': hospitalSelectedUid,
+                                    });
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        duration: Duration(seconds: 3),
+                                        showCloseIcon: true,
+                                        content: Text("تم إرسال طلب التبرع بنجاح "),
+                                      ),
+                                    );
+                                  } catch (e) {
+                                    print('Error deleting donation request: $e');
+                                    // Handle the error accordingly
+                                  }
+                                }
 
-                          deleteDonation();
-                        },
-                      ),
-                    ),
-                  ),
+                                deleteDonation();
+                              },
+                            ),
+                          ),
+                        )
+                      : const SizedBox(),
                   SizedBox(
                     height: height * Constant.searchBodyHeight,
                     child: StreamBuilder<QuerySnapshot>(
@@ -484,6 +691,7 @@ class _HomeState extends State<Home> {
                               String description = data['description'];
                               int numberDonorsRequired = data['numberDonorsRequired'];
                               String hospitalUid = data['hospitalUid'];
+                              String status = data['status'];
                               String documentDetailuid = document.id;
 
                               DateTime now2 = data['date']?.toDate() ?? DateTime.now();
@@ -568,6 +776,18 @@ class _HomeState extends State<Home> {
                                                   child: SizedBox(
                                                     width: width * 0.8,
                                                     child: CustomText(
+                                                      title: "حالة الطلب : $status",
+                                                      fontSize: width * 0.04,
+                                                      color: AppTheme.tripCardLocationColor,
+                                                      fontWight: FontWeight.w400,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: Constant.tripCardLocationPadding),
+                                                  child: SizedBox(
+                                                    width: width * 0.8,
+                                                    child: CustomText(
                                                       title: "ميعاد التبرع : $date",
                                                       fontSize: width * 0.04,
                                                       color: AppTheme.tripCardLocationColor,
@@ -575,7 +795,7 @@ class _HomeState extends State<Home> {
                                                     ),
                                                   ),
                                                 ),
-                                                numberDonorsRequired != 0
+                                                userRole != 'hospital'
                                                     ? Padding(
                                                         padding:
                                                             const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
@@ -598,7 +818,14 @@ class _HomeState extends State<Home> {
                                                                     .collection('userDonationRequestWithHospital');
 
                                                                 DateTime now = DateTime.now();
-                                                                Timestamp currentTimestamp = Timestamp.fromDate(now);
+                                                                DateTime currentTimestamp = DateTime(
+                                                                    now.year,
+                                                                    now.month,
+                                                                    now.day); // يتم استخدام هذا للحصول على تاريخ بدون وقت
+                                                                String formattedDate = currentTimestamp
+                                                                    .toLocal()
+                                                                    .toIso8601String()
+                                                                    .substring(0, 10);
 
                                                                 mainTickets.add({
                                                                   'status': 'panding',
@@ -615,32 +842,13 @@ class _HomeState extends State<Home> {
                                                                   'userChronicDiseases': userChronicDiseases,
                                                                   'ticketId': ticketId,
                                                                   'donationDeadline': date,
-                                                                  'time': currentTimestamp,
+                                                                  'time': formattedDate,
                                                                   'hospitalUID': hospitalSelectedUid,
                                                                 });
                                                               }
 
                                                               payTickets();
-                                                              try {
-                                                                // استدعاء Firestore لتحديث الحقل "like"
-                                                                await FirebaseFirestore.instance
-                                                                    .collection('cities')
-                                                                    .doc(documentId)
-                                                                    .collection('events')
-                                                                    .doc(documentDetailId)
-                                                                    .update({
-                                                                  'totalTicketsAvailable': FieldValue.increment(-1)
-                                                                });
-                                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                                  const SnackBar(
-                                                                    duration: Duration(seconds: 3),
-                                                                    showCloseIcon: true,
-                                                                    content: Text("تم شراء التذكرة بنجاح"),
-                                                                  ),
-                                                                );
-                                                              } catch (e) {
-                                                                print('حدث خطأ: $e');
-                                                              }
+
                                                               setState(() {});
                                                               ScaffoldMessenger.of(context).showSnackBar(
                                                                 const SnackBar(
