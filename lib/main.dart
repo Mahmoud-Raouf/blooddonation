@@ -38,6 +38,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return Sizer(builder: (context, orientation, dtype) {
+      // Getx
       return GetMaterialApp(
         textDirection: TextDirection.rtl,
         // تعريف سمة التصميم الرئيسية للتطبيق

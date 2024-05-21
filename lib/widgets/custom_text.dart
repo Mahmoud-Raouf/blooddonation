@@ -48,13 +48,13 @@ class _CustomTextState extends State<CustomText> {
       ),
       child: Text(
         widget.title, // نص العنصر الذي سيتم عرضه
-        textAlign: widget.textAlign, // توجيه النص (اليمين، الوسط، اليسار)
+        textAlign: TextAlign.right, // توجيه النص (اليمين، الوسط، اليسار)
         style: TextStyle(
           color: widget.color, // لون النص
           fontFamily: widget.fontfamily, // نوع الخط
           fontWeight: widget.fontWight, // سمك الخط
           fontSize: widget.fontSize, // حجم الخط
-          wordSpacing: 0.1, // تباعد الكلمات
+          wordSpacing: 0.5, // تباعد الكلمات
           height: widget.height, // ارتفاع السطر
         ),
       ),

@@ -1,3 +1,8 @@
+import 'dart:math';
+
+import 'package:blooddonation/pages/Dashboard/allDonationRequests.dart';
+import 'package:blooddonation/webservices/firebase_data.dart';
+import 'package:blooddonation/widgets/Custombutton.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +19,8 @@ import 'package:blooddonation/util/resources.dart';
 import 'package:blooddonation/widgets/_appbar.dart';
 import 'package:blooddonation/widgets/custom_text.dart';
 import 'dart:ui';
+import 'package:intl/intl.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import 'package:blooddonation/widgets/glashMorphisam.dart';
 import 'package:blooddonation/widgets/no_appbar.dart';
@@ -33,45 +40,113 @@ class _HomeState extends State<Home> {
   final homeController = Get.put(HomeController());
   String documentId = "";
   String documentDetailId = "";
-  String _title = "";
-  String _description1 = "";
-  String _description2 = "";
-  String _subImage1 = "";
-  String _subImage2 = "";
-  String _subImage3 = "";
-  String _subImage4 = "";
+  final String _title = "";
+  final String _description1 = "";
+  final String _description2 = "";
+  final String _subImage1 = "";
+  final String _subImage2 = "";
+  final String _subImage3 = "";
+  final String _subImage4 = "";
+  String userId = "";
+  String userName = "";
+  String userRole = "user";
+  String userEmail = "";
+  String userBloodType = "";
+  String userChronicDiseases = "";
+  String userWeight = "";
+  String userHeight = "";
+  String userAge = "";
+  String hospitalSelectedUid = "";
 
-  Future<void> fetchDocument() async {
-    final querySnapshot = await FirebaseFirestore.instance
-        .collection('cities')
-        .doc(documentId)
-        .collection('landmarks')
-        .where('id', isEqualTo: documentDetailId)
-        .get();
+  bool isCompatible(String donorBloodType, String recipientBloodType) {
+    // خريطة تحتوي على قوائم الفصائل الدموية المتوافقة مع كل فصيلة دم ممكنة
 
-    if (querySnapshot.docs.isNotEmpty) {
-      final data = querySnapshot.docs[0].data();
+    Map<String, List<String>> compatibility = {
+      'O-': ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'],
+      'O+': ['O+', 'A+', 'B+', 'AB+'],
+      'A-': ['A-', 'A+', 'AB-', 'AB+'],
+      'A+': ['A+', 'AB+'],
+      'B-': ['B-', 'B+', 'AB-', 'AB+'],
+      'B+': ['B+', 'AB+'],
+      'AB-': ['AB-', 'AB+'],
+      'AB+': ['AB+'],
+    };
+    // التحقق مما إذا كانت الفصيلة المطلوبة تندرج ضمن قائمة الفصائل المتوافقة لفصيلة الدم للمتبرع
 
-      setState(() {
-        _title = data['title'] ?? '';
-        _description1 = data['description1'] ?? '';
-        _description2 = data['description2'] ?? ''; // Fix the typo here
-        _subImage1 = data['subImage1'] ?? '';
-        _subImage2 = data['subImage2'] ?? '';
-        _subImage3 = data['subImage3'] ?? '';
-        _subImage4 = data['subImage4'] ?? '';
-      });
-    } else {
-      setState(() {
-        _title = '';
-        _description1 = '';
-        _description2 = '';
-        _subImage1 = '';
-        _subImage2 = '';
-        _subImage3 = '';
-        _subImage4 = '';
-      });
+    return compatibility[donorBloodType]?.contains(recipientBloodType) ?? false;
+  }
+
+  String generateRandomNumber() {
+    Random random = Random(); // إنشاء كائن لتوليد أرقام عشوائية
+    String randomNumber = ''; // تهيئة سلسلة فارغة لتخزين الرقم العشوائي
+
+    for (int i = 0; i < 10; i++) {
+      // حلقة تكرار لإنشاء رقم عشوائي من 10 خانات
+      randomNumber += random.nextInt(10).toString(); // إضافة رقم عشوائي جديد إلى السلسلة
     }
+    setState(() {
+      randomNumber; // تحديث قيمة الرقم العشوائي في واجهة المستخدم
+    });
+    return randomNumber; // إرجاع الرقم العشوائي المولّد
+  }
+
+  void deleteDocument(String documentId) {
+    FirebaseFirestore.instance.collection('notifications').doc(documentId).delete().then((_) {
+      print("تم حذف الوثيقة بنجاح!");
+    }).catchError((error) {
+      print("حدث خطأ أثناء حذف الوثيقة: $error");
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getCurrentUserUid().then((uid) {
+      setState(() {
+        userId = uid;
+      });
+    });
+    getCurrentUserbloodType().then((bloodType) {
+      setState(() {
+        userBloodType = bloodType;
+      });
+    });
+    getCurrentUseData().then((name) {
+      setState(() {
+        userName = name;
+      });
+    });
+    getCurrentEmail().then((uemail) {
+      setState(() {
+        userEmail = uemail;
+      });
+    });
+
+    getCurrentUserRole().then((role) {
+      setState(() {
+        userRole = role;
+      });
+    });
+    getCurrentUserAge().then((age) {
+      setState(() {
+        userAge = age;
+      });
+    });
+    getCurrentUserWeight().then((weight) {
+      setState(() {
+        userWeight = weight;
+      });
+    });
+    getCurrentUserChronicDiseases().then((chronicDiseases) {
+      setState(() {
+        userChronicDiseases = chronicDiseases;
+      });
+    });
+    getCurrentUserHeight().then((height) {
+      setState(() {
+        userHeight = height;
+      });
+    });
   }
 
   @override
@@ -97,15 +172,18 @@ class _HomeState extends State<Home> {
               case Constant.INT_ONE:
                 return _home(); // عرض واجهة الصفحة الرئيسية
               case Constant.INT_TWO:
-                return Profile(
-                  homeController: homeController,
-                ); // عرض واجهة الصفحة الشخصية
+                return userRole == 'user'
+                    ? Profile(
+                        homeController: homeController,
+                      )
+                    : const allHospitalDonationRequests(); // عرض واجهة الصفحة الشخصية
               case Constant.INT_THREE:
                 return const DonationRequest(); // عرض واجهة الصفحة "Connect"
               case Constant.INT_FOUR:
-                return bookingList(documentId); // عرض واجهة قائمة الحجوزات
-              case Constant.INT_SIX:
-                return detailsPage(); // عرض واجهة تفاصيل مكان
+                return allDonationRequests(); // عرض واجهة قائمة الحجوزات
+              case Constant.INT_UserNotification:
+                return userNotification(); // عرض واجهة تفاصيل مكان
+
               default:
                 return _home();
             }
@@ -163,18 +241,6 @@ class _HomeState extends State<Home> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween, // تنظيم العناصر بشكل أفقي بين الحواف
                   children: [
-                    CircleAvatar(
-                      radius: Constant.circleImageRadius, // نصف قطر الصورة الدائرية
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.exit_to_app,
-                          color: AppTheme.colorRed,
-                        ), // أيقونة خروج
-                        onPressed: () {
-                          _signOut(context); // استدعاء دالة الخروج عند النقر
-                        },
-                      ),
-                    ),
                     Column(
                       mainAxisAlignment: MainAxisAlignment.start, // محاذاة العناصر إلى الأعلى
                       crossAxisAlignment: CrossAxisAlignment.start, // محاذاة العناصر إلى اليسار
@@ -194,6 +260,33 @@ class _HomeState extends State<Home> {
                               : Strings.youWantToGo, // نص العنصر الثاني يعتمد على حالة البحث
                           fontfamily: Strings.emptyString, // نوع الخط
                         ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: Constant.circleImageRadius, // نصف قطر الصورة الدائرية
+                          child: IconButton(
+                            icon: const Icon(Icons.exit_to_app), // أيقونة خروج
+                            onPressed: () {
+                              _signOut(context); // استدعاء دالة الخروج عند النقر
+                            },
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        CircleAvatar(
+                          radius: Constant.circleImageRadius, // نصف قطر الصورة الدائرية
+                          child: IconButton(
+                            color: Colors.red,
+                            icon: const Icon(Icons.notification_important), // أيقونة خروج
+                            onPressed: () {
+                              homeController.index = Constant.INT_UserNotification;
+                              homeController.update();
+                            },
+                          ),
+                        )
                       ],
                     ),
                   ],
@@ -230,6 +323,8 @@ class _HomeState extends State<Home> {
                 String name = data['name'];
                 String picture = data['picture'];
                 String location = data['location'];
+                String hospitalSelectedUid = data['uid'];
+
                 String documentuid = document.id;
                 return InkWell(
                   onTap: () {
@@ -237,43 +332,43 @@ class _HomeState extends State<Home> {
                     homeController.update();
                     setState(() {
                       documentId = documentuid;
+                      this.hospitalSelectedUid = hospitalSelectedUid; // حفظ القيمة هنا
                     });
                   },
                   child: Padding(
-                    padding: const EdgeInsets.all(12.0), // هامش للعنصر الرئيسي
+                    padding: const EdgeInsets.all(12.0),
                     child: Container(
-                      height: Constant.planImageTopBoxHeight * 5.5, // تحديد ارتفاع العنصر
-                      width: width, // تحديد عرض العنصر
+                      height: Constant.planImageTopBoxHeight * 5.5,
+                      width: width,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(Constant.planImageRadius), // تحديد شكل حواف العنصر
+                        borderRadius: BorderRadius.circular(Constant.planImageRadius),
                         image: DecorationImage(
-                          image: NetworkImage(picture), // استخدام صورة من الإنترنت باستخدام رابط الصورة
-                          fit: BoxFit.fill, // طريقة ملء الصورة داخل الحاوية
+                          image: NetworkImage(picture),
+                          fit: BoxFit.fill,
                         ),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.all(Constant.planImageTopBoxPadding), // هامش داخلي للعنصر
+                        padding: const EdgeInsets.all(Constant.planImageTopBoxPadding),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end, // محاذاة العناصر إلى اليمين
-                          crossAxisAlignment: CrossAxisAlignment.start, // محاذاة العناصر إلى الأعلى
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Column(
                               children: [
                                 GlassmorPhism(
-                                  // Widget خاص بإضافة تأثير الـGlassmorphism للعنصر
-                                  blure: Constant.planImageTopBoxBlurness, // درجة التمويه (blurness)
-                                  opacity: Constant.planImageTopBoxOpacity, // درجة الشفافية
-                                  radius: Constant.planImageTopBoxRadius, // نصف قطر التأثير
+                                  blure: Constant.planImageTopBoxBlurness,
+                                  opacity: Constant.planImageTopBoxOpacity,
+                                  radius: Constant.planImageTopBoxRadius,
                                   child: SizedBox(
-                                    height: Constant.planImageTopBoxHeight * 1.2, // ارتفاع العنصر الداخلي
-                                    width: Constant.planImageTopBoxWidth * 1.4, // عرض العنصر الداخلي
+                                    height: Constant.planImageTopBoxHeight * 1.2,
+                                    width: Constant.planImageTopBoxWidth * 1.4,
                                     child: Center(
                                       child: CustomText(
-                                        title: name, // نص العنصر
-                                        color: AppTheme.colorblack, // لون النص
-                                        fontfamily: Strings.emptyString, // خط النص
-                                        fontWight: FontWeight.w400, // وزن الخط
-                                        fontSize: name.length > 6 ? 12 : 15, // حجم الخط يعتمد على طول النص
+                                        title: name,
+                                        color: AppTheme.colorblack,
+                                        fontfamily: Strings.emptyString,
+                                        fontWight: FontWeight.w400,
+                                        fontSize: name.length > 6 ? 12 : 15,
                                       ),
                                     ),
                                   ),
@@ -282,20 +377,19 @@ class _HomeState extends State<Home> {
                                   height: 10,
                                 ),
                                 GlassmorPhism(
-                                  // Widget خاص بإضافة تأثير الـGlassmorphism للعنصر
-                                  blure: Constant.planImageTopBoxBlurness, // درجة التمويه (blurness)
-                                  opacity: Constant.planImageTopBoxOpacity, // درجة الشفافية
-                                  radius: Constant.planImageTopBoxRadius, // نصف قطر التأثير
+                                  blure: Constant.planImageTopBoxBlurness,
+                                  opacity: Constant.planImageTopBoxOpacity,
+                                  radius: Constant.planImageTopBoxRadius,
                                   child: SizedBox(
-                                    height: Constant.planImageTopBoxHeight * 1.2, // ارتفاع العنصر الداخلي
-                                    width: Constant.planImageTopBoxWidth * 1.4, // عرض العنصر الداخلي
+                                    height: Constant.planImageTopBoxHeight * 1.2,
+                                    width: Constant.planImageTopBoxWidth * 1.4,
                                     child: Center(
                                       child: CustomText(
-                                        title: location, // نص العنصر
-                                        color: AppTheme.colorblack, // لون النص
-                                        fontfamily: Strings.emptyString, // خط النص
-                                        fontWight: FontWeight.w400, // وزن الخط
-                                        fontSize: name.length > 6 ? 12 : 15, // حجم الخط يعتمد على طول النص
+                                        title: location,
+                                        color: AppTheme.colorblack,
+                                        fontfamily: Strings.emptyString,
+                                        fontWight: FontWeight.w400,
+                                        fontSize: name.length > 6 ? 12 : 15,
                                       ),
                                     ),
                                   ),
@@ -317,7 +411,177 @@ class _HomeState extends State<Home> {
     );
   }
 
-  bookingList(String cityName) {
+  userNotification() {
+    return Scaffold(
+      appBar: NoAppBar(),
+      body: Padding(
+        padding: const EdgeInsets.only(
+          left: Constant.bookingTileLeftPadding,
+          right: Constant.bookingTileRightPadding,
+        ),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Padding(
+            padding: Constant.constantPadding(Constant.SIZE100 / 2),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 300),
+              child: Column(
+                children: [
+                  CustomAppBar(
+                    title: "الإشعارات",
+                    space: Constant.SIZE15,
+                    leftPadding: 15,
+                    bottomPadding: 10,
+                    onTap: () {
+                      // تحديث حالة التطبيق عند النقر على شريط العنوان
+                      homeController.index = Constant.INT_ONE;
+                      homeController.update();
+                    },
+                  ),
+                  SizedBox(
+                    height: height * Constant.searchBodyHeight,
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('notifications')
+                          .where('userUid', isEqualTo: userId)
+                          .snapshots(),
+                      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                        if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        }
+
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const CircularProgressIndicator();
+                        }
+
+                        if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+                          return ListView.builder(
+                            padding: EdgeInsets.only(
+                              left: Constant.searchTileListLeftPadding,
+                              bottom: height * Constant.searchTileListBottomPadding,
+                              right: Constant.searchTileListRightPadding,
+                              top: Constant.searchTileListTopPadding,
+                            ),
+                            itemCount: snapshot.data!.docs.length,
+                            itemBuilder: (context, index) {
+                              DocumentSnapshot document = snapshot.data!.docs[index];
+                              Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+                              String title = data['title'] ?? '';
+                              String description = data['description'] ?? '';
+                              String time = data['time'] ?? '';
+                              String documentuid = document.id;
+
+                              return Stack(
+                                children: [
+                                  // تأثير زجاجي خلفي للعنصر
+                                  BackdropFilter(
+                                    filter: ImageFilter.blur(sigmaX: Constant.blurSigmaX, sigmaY: Constant.blurSigmaY),
+                                  ),
+
+                                  InkWell(
+                                    onTap: () {
+                                      // إخفاء لوحة المفاتيح عند النقر على العنصر
+                                      FocusScope.of(context).unfocus();
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.all(Constant.searchTileMargin),
+                                      padding: const EdgeInsets.only(bottom: Constant.searchTileContentBottomPadding),
+                                      decoration: Constant.boxDecoration,
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(right: 8.0),
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.start,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                const SizedBox(
+                                                  height: 20,
+                                                ),
+                                                CustomText(
+                                                  title: title,
+                                                  fontSize: width * 0.033,
+                                                  color: AppTheme.colorblack,
+                                                  fontWight: FontWeight.w900,
+                                                ),
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: Constant.tripCardLocationPadding),
+                                                  child: SizedBox(
+                                                    width: width * 0.73,
+                                                    child: CustomText(
+                                                      title: description,
+                                                      fontSize: width * 0.037,
+                                                      color: Colors.black87,
+                                                      height: 1.3,
+                                                      fontWight: FontWeight.w400,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: Constant.tripCardLocationPadding),
+                                                  child: SizedBox(
+                                                    width: width * 0.7,
+                                                    child: CustomText(
+                                                      title: 'بتاريخ : $time',
+                                                      fontSize: width * 0.031,
+                                                      color: Colors.black87,
+                                                      fontWight: FontWeight.w400,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(right: 10.0),
+                                            child: IconButton(
+                                              icon: const Icon(
+                                                Icons.delete,
+                                                color: Colors.red,
+                                              ),
+                                              onPressed: () {
+                                                deleteDocument(document.id);
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        } else {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 200.0),
+                            child: SizedBox(
+                              child: CustomText(
+                                title: 'ليس لديك إشعارات حتى الأن ',
+                                fontSize: 13,
+                                color: Colors.black87,
+                                fontWight: FontWeight.w400,
+                              ),
+                            ),
+                          ); // التعامل مع حالة عدم وجود بيانات
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 200,
+                  )
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  allDonationRequests() {
     return Scaffold(
       backgroundColor: AppTheme.colorTransprant,
       appBar: NoAppBar(),
@@ -336,7 +600,7 @@ class _HomeState extends State<Home> {
                 children: [
                   // شريط العنوان الخاص بالتطبيق
                   CustomAppBar(
-                    title: "All landmarks",
+                    title: "طلبات التبرع",
                     space: Constant.SIZE15,
                     leftPadding: 15,
                     bottomPadding: 10,
@@ -346,13 +610,73 @@ class _HomeState extends State<Home> {
                       homeController.update();
                     },
                   ),
+                  userRole != 'hospital'
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 30,
+                          ),
+                          child: SizedBox(
+                            width: width * 0.7,
+                            child: CustomButton(
+                              backgroundColor: AppTheme.themeColor,
+                              borderColor: AppTheme.themeColor,
+                              // width: 50,
+                              buttonTitle: "إرسال طلب تبرع",
+                              height: Constant.customButtonHeight / 1.5,
+                              textColor: AppTheme.colorWhite,
+                              onTap: () async {
+                                Future deleteDonation() async {
+                                  CollectionReference donationRequestRef =
+                                      FirebaseFirestore.instance.collection('freeDonationRequest');
+
+                                  DateTime now = DateTime.now();
+                                  DateTime currentTimestamp = DateTime(
+                                      now.year, now.month, now.day); // يتم استخدام هذا للحصول على تاريخ بدون وقت
+                                  String formattedDate = currentTimestamp
+                                      .toLocal()
+                                      .toIso8601String()
+                                      .substring(0, 10); // يتم استخدام substring للحصول على التاريخ فقط بدون الوقت
+
+                                  try {
+                                    donationRequestRef.add({
+                                      'status': 'panding',
+                                      'userUid': userId,
+                                      'userName': userName,
+                                      'userEmail': userEmail,
+                                      'userBloodType': userBloodType,
+                                      'userAge': userAge,
+                                      'userWeight': userWeight,
+                                      'userHeight': userHeight,
+                                      'userChronicDiseases': userChronicDiseases,
+                                      'time': formattedDate,
+                                      'hospitalUID': hospitalSelectedUid,
+                                    });
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        duration: Duration(seconds: 3),
+                                        showCloseIcon: true,
+                                        content: Text("تم إرسال طلب التبرع بنجاح "),
+                                      ),
+                                    );
+                                  } catch (e) {
+                                    print('Error deleting donation request: $e');
+                                    // Handle the error accordingly
+                                  }
+                                }
+
+                                deleteDonation();
+                              },
+                            ),
+                          ),
+                        )
+                      : const SizedBox(),
                   SizedBox(
                     height: height * Constant.searchBodyHeight,
                     child: StreamBuilder<QuerySnapshot>(
                       stream: FirebaseFirestore.instance
-                          .collection('cities')
+                          .collection('hospitals')
                           .doc(documentId)
-                          .collection('landmarks')
+                          .collection('donationRequest')
                           .snapshots(),
                       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
                         if (snapshot.hasError) {
@@ -364,7 +688,6 @@ class _HomeState extends State<Home> {
                         }
 
                         if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
-                          // عرض قائمة الأماكن السياحية
                           return ListView.builder(
                             padding: EdgeInsets.only(
                               left: Constant.searchTileListLeftPadding,
@@ -377,11 +700,17 @@ class _HomeState extends State<Home> {
                               DocumentSnapshot document = snapshot.data!.docs[index];
                               Map<String, dynamic> data = document.data() as Map<String, dynamic>;
                               String title = data['title'];
-                              String picture = data['picture'];
-                              String address = data['address'];
+                              String bloodGroups = data['bloodGroups'];
+                              String description = data['description'];
+                              int numberDonorsRequired = data['numberDonorsRequired'];
+                              String hospitalUid = data['hospitalUid'];
+                              String status = data['status'];
                               String documentDetailuid = document.id;
 
-                              // بناء كل عنصر من عناصر قائمة الأماكن السياحية
+                              DateTime now2 = data['date']?.toDate() ?? DateTime.now();
+                              DateFormat formatter2 = DateFormat.yMd().add_jm();
+                              String date = formatter2.format(now2);
+
                               return Stack(
                                 children: [
                                   // تأثير زجاجي خلفي للعنصر
@@ -398,99 +727,201 @@ class _HomeState extends State<Home> {
                                       padding: const EdgeInsets.only(bottom: Constant.searchTileContentBottomPadding),
                                       decoration: Constant.boxDecoration,
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          // عرض صورة الأماكن السياحية
                                           Padding(
-                                            padding: const EdgeInsets.only(
-                                              right: Constant.bookingTileImageRightPadding,
-                                              top: Constant.bookingTileTopRightPadding,
-                                            ),
-                                            child: Container(
-                                              height: height * Constant.searchTileImageHeight,
-                                              width: width / Constant.searchTileImageWidth,
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(Constant.searchTileImageCircularRadius),
-                                                image: DecorationImage(
-                                                  image: NetworkImage(picture),
-                                                  fit: BoxFit.cover,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          // معلومات الأماكن السياحية
-                                          Column(
-                                            mainAxisAlignment: MainAxisAlignment.start,
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              const SizedBox(
-                                                height: 20,
-                                              ),
-                                              // عنوان الأماكن السياحية
-                                              CustomText(
-                                                title: title,
-                                                fontSize: Constant.searchTileTitleSize,
-                                                color: AppTheme.colorblack,
-                                                fontWight: FontWeight.w900,
-                                              ),
-                                              // عنوان العنوان والموقع
-                                              Padding(
-                                                padding: const EdgeInsets.only(top: Constant.tripCardLocationPadding),
-                                                child: Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.location_on_outlined,
-                                                      color: AppTheme.tripCardLocationColor,
-                                                      size: Constant.locationIconSize,
-                                                    ),
-                                                    CustomText(
-                                                      title: address,
-                                                      fontSize: Constant.searchTileSubTitleSize,
-                                                      color: AppTheme.tripCardLocationColor,
-                                                      fontWight: FontWeight.w400,
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          // زر "المزيد"
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              left: Constant.ongoingButtonLeftPadding,
-                                              right: Constant.ongoingButtonRightPadding,
-                                              top: Constant.ongoingButtonTopPadding * 4,
-                                            ),
+                                            padding: const EdgeInsets.only(right: 8.0),
                                             child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.start,
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
-                                                Column(
-                                                  children: [
-                                                    InkWell(
-                                                      onTap: () async {
-                                                        // عرض تفاصيل المزيد
-                                                        homeController.index = Constant.INT_SIX;
-                                                        homeController.update();
-                                                        setState(() {
-                                                          documentDetailId = documentDetailuid;
-                                                        });
-                                                      },
-                                                      child: CustomText(
-                                                        topPadding: Constant.moreTextTopPadding,
-                                                        title: Strings.more,
-                                                        fontSize: Constant.moreTextSize,
-                                                        fontfamily: Strings.emptyString,
-                                                        color: AppTheme.themeColor,
-                                                        fontWight: FontWeight.w400,
-                                                      ),
-                                                    )
-                                                  ],
-                                                )
+                                                const SizedBox(
+                                                  height: 20,
+                                                ),
+
+                                                CustomText(
+                                                  title: title,
+                                                  fontSize: Constant.searchTileTitleSize,
+                                                  color: AppTheme.colorblack,
+                                                  fontWight: FontWeight.w900,
+                                                ),
+                                                // عنوان التفاصيل والموقع
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: Constant.tripCardLocationPadding),
+                                                  child: SizedBox(
+                                                    width: width * 0.8,
+                                                    child: CustomText(
+                                                      title: "وصف الطلب : $description",
+                                                      fontSize: width * 0.04,
+                                                      color: AppTheme.tripCardLocationColor,
+                                                      fontWight: FontWeight.w400,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: Constant.tripCardLocationPadding),
+                                                  child: SizedBox(
+                                                    width: width * 0.8,
+                                                    child: CustomText(
+                                                      title: "نوع الفصيلة : $bloodGroups",
+                                                      fontSize: width * 0.04,
+                                                      color: AppTheme.tripCardLocationColor,
+                                                      fontWight: FontWeight.w400,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: Constant.tripCardLocationPadding),
+                                                  child: SizedBox(
+                                                    width: width * 0.8,
+                                                    child: CustomText(
+                                                      title: "كمية الاحتياج : $numberDonorsRequired متبرع",
+                                                      fontSize: width * 0.04,
+                                                      color: AppTheme.tripCardLocationColor,
+                                                      fontWight: FontWeight.w400,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: Constant.tripCardLocationPadding),
+                                                  child: SizedBox(
+                                                    width: width * 0.8,
+                                                    child: CustomText(
+                                                      title: "حالة الطلب : $status",
+                                                      fontSize: width * 0.04,
+                                                      color: AppTheme.tripCardLocationColor,
+                                                      fontWight: FontWeight.w400,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: Constant.tripCardLocationPadding),
+                                                  child: SizedBox(
+                                                    width: width * 0.8,
+                                                    child: CustomText(
+                                                      title: "ميعاد التبرع : $date",
+                                                      fontSize: width * 0.04,
+                                                      color: AppTheme.tripCardLocationColor,
+                                                      fontWight: FontWeight.w400,
+                                                    ),
+                                                  ),
+                                                ),
+                                                userRole != 'hospital'
+                                                    ? Padding(
+                                                        padding: const EdgeInsets.symmetric(
+                                                            horizontal: 30,
+                                                            vertical: 10), // تعيين الهوامش الأفقية والعمودية للحاوية
+                                                        child: SizedBox(
+                                                          width: width * 0.7, // تحديد عرض الحاوية
+                                                          child: CustomButton(
+                                                            backgroundColor:
+                                                                AppTheme.themeColor, // تحديد لون الخلفية لزر التبرع
+                                                            borderColor:
+                                                                AppTheme.themeColor, // تحديد لون الحدود لزر التبرع
+                                                            buttonTitle: "طلب تبرع", // نص الزر
+                                                            height: Constant.customButtonHeight /
+                                                                1.5, // تحديد الارتفاع لزر التبرع
+                                                            textColor: AppTheme.colorWhite, // تحديد لون النص لزر التبرع
+                                                            onTap: () async {
+                                                              // استجابة النقر على زر التبرع
+                                                              Future<void> subDonation() async {
+                                                                // تعريف دالة لإرسال طلب التبرع
+                                                                String ticketId =
+                                                                    generateRandomNumber(); // توليد رقم عشوائي لتذكرة التبرع
+
+                                                                CollectionReference mainTickets =
+                                                                    FirebaseFirestore.instance.collection(
+                                                                        'userDonationRequestWithHospital'); // الحصول على مرجع لمجموعة الوثائق الرئيسية
+
+                                                                DateTime now = DateTime
+                                                                    .now(); // الحصول على التاريخ والوقت الحاليين
+                                                                DateTime currentTimestamp = DateTime(
+                                                                    now.year,
+                                                                    now.month,
+                                                                    now.day); // تحديد التاريخ الحالي بدون وقت
+                                                                String formattedDate = currentTimestamp
+                                                                    .toLocal()
+                                                                    .toIso8601String()
+                                                                    .substring(0, 10); // تنسيق التاريخ
+
+                                                                if (!isCompatible(userBloodType, bloodGroups)) {
+                                                                  // التحقق من عدم التوافق بين فصيلة الدم للمتبرع والمطلوبة
+                                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                                    // عرض رسالة توجيهية إذا لم يكن هناك توافق
+                                                                    const SnackBar(
+                                                                      duration: Duration(seconds: 10),
+                                                                      showCloseIcon: true,
+                                                                      content: Text(
+                                                                          "فصيلة دمك غير متوافقة مع فصيلة الدم المطلوبة ولا يمكنك التبرع لها."),
+                                                                    ),
+                                                                  );
+                                                                  return; // الخروج من الدالة في حالة عدم التوافق
+                                                                } else {
+                                                                  // في حالة وجود توافق بين الفصائل الدموية
+                                                                  await mainTickets.add({
+                                                                    // إضافة طلب التبرع إلى قاعدة البيانات
+                                                                    'status': 'pending',
+                                                                    'userUid': userId,
+                                                                    'userName': userName,
+                                                                    'userEmail': userEmail,
+                                                                    'title': title,
+                                                                    'description': description,
+                                                                    'bloodGroups': bloodGroups,
+                                                                    'userBloodType': userBloodType,
+                                                                    'userAge': userAge,
+                                                                    'userWeight': userWeight,
+                                                                    'userHeight': userHeight,
+                                                                    'userChronicDiseases': userChronicDiseases,
+                                                                    'ticketId': ticketId,
+                                                                    'donationDeadline': date,
+                                                                    'time': formattedDate,
+                                                                    'hospitalUID': hospitalSelectedUid,
+                                                                  });
+                                                                  Fluttertoast.showToast(
+                                                                      msg:
+                                                                          "تم تقديم طلب التبرع سيتم ارسال رسالة على البريد المسجل لدينا بالقبول او الرفض",
+                                                                      toastLength: Toast.LENGTH_SHORT,
+                                                                      gravity: ToastGravity.BOTTOM,
+                                                                      timeInSecForIosWeb: 3,
+                                                                      fontSize: 16.0);
+                                                                }
+                                                              }
+
+                                                              await subDonation(); // استدعاء دالة إرسال طلب التبرع
+                                                              setState(
+                                                                  () {}); // إعادة بناء الواجهة بعد الانتهاء من إرسال طلب التبرع
+                                                            },
+                                                          ),
+                                                        ),
+                                                      )
+                                                    : const SizedBox(),
+                                                // Padding(
+                                                //   padding: EdgeInsets.only(
+                                                //     right: width * 0.35,
+                                                //   ),
+                                                //   child: InkWell(
+                                                //     onTap: () async {
+                                                //       // عرض تفاصيل المزيد
+                                                //       homeController.index = Constant.INT_SIX;
+                                                //       homeController.update();
+                                                //       setState(() {
+                                                //         documentDetailId = documentDetailuid;
+                                                //       });
+                                                //     },
+                                                //     child: CustomText(
+                                                //       topPadding: Constant.moreTextTopPadding,
+                                                //       title: Strings.more,
+                                                //       fontSize: Constant.moreTextSize,
+                                                //       fontfamily: Strings.emptyString,
+                                                //       color: AppTheme.themeColor,
+                                                //       fontWight: FontWeight.w400,
+                                                //     ),
+                                                //   ),
+                                                // ),
                                               ],
                                             ),
                                           ),
+                                          // زر "المزيد"
                                         ],
                                       ),
                                     ),
@@ -513,190 +944,6 @@ class _HomeState extends State<Home> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  detailsPage() {
-    return Scaffold(
-      appBar: NoAppBar(), // لا يوجد شريط عنوان في هذه الصفحة
-      body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('cities')
-            .doc(documentId)
-            .collection('landmarks')
-            .doc(documentDetailId)
-            .snapshots(),
-        builder: (context, snapshot) {
-          var place = snapshot.data?.data() as Map<String, dynamic>?; // البيانات من Firestore
-          String title = place?['title'] ?? ''; // العنوان
-          String address = place?['address'] ?? ''; // العنوان
-          String description1 = place?['description2'] ?? ''; // الوصف الأول
-          String description2 = place?['description2'] ?? ''; // الوصف الثاني
-          List<Map<String, String>> images = [
-            {'image': place?['subImage1'] ?? ''},
-            {'image': place?['subImage2'] ?? ''},
-            {'image': place?['subImage3'] ?? ''},
-            {'image': place?['subImage4'] ?? ''},
-          ]; // قائمة بالصور المصغرة للمكان
-
-          return ListView(
-            children: <Widget>[
-              const SizedBox(height: 30.0),
-              CustomAppBar(
-                title: "All landmarks",
-                space: Constant.SIZE15,
-                leftPadding: 15,
-                bottomPadding: 10,
-                onTap: () {
-                  homeController.index = Constant.INT_FOUR;
-                  homeController.update();
-                },
-              ),
-              const SizedBox(height: 10.0),
-              Container(
-                padding: const EdgeInsets.only(left: 20),
-                height: 250.0,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  primary: false,
-                  itemCount: images.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    String imageUrl = images[index]['image'] ?? '';
-
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 10.0),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10.0),
-                        child: Image.network(
-                          imageUrl,
-                          height: 250.0,
-                          width: MediaQuery.of(context).size.width - 40.0,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-                            if (loadingProgress == null) {
-                              // إذا كانت الصورة قد تم تحميلها بالكامل، نقوم بعرض الصورة
-                              return child;
-                            } else {
-                              // إذا كانت الصورة لا تزال قيد التحميل، نعرض دائرة التحميل
-                              return Center(
-                                child: CircularProgressIndicator(
-                                  value: loadingProgress.expectedTotalBytes != null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                          (loadingProgress.expectedTotalBytes ?? 1)
-                                      : null,
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 200),
-                child: Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    primary: false,
-                    physics: const NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    children: <Widget>[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          Container(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              title,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 20,
-                              ),
-                              maxLines: 2,
-                              textAlign: TextAlign.left,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.bookmark,
-                            ),
-                            onPressed: () {},
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: <Widget>[
-                          Icon(
-                            Icons.location_on,
-                            size: 14,
-                            color: Colors.blueGrey[300],
-                          ),
-                          const SizedBox(width: 3),
-                          Container(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              address,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                                color: Colors.blueGrey[300],
-                              ),
-                              maxLines: 1,
-                              textAlign: TextAlign.right,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 40),
-                      Container(
-                        alignment: Alignment.centerRight,
-                        child: const Text(
-                          "Details",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                          maxLines: 1,
-                          textAlign: TextAlign.right,
-                        ),
-                      ),
-                      const SizedBox(height: 10.0),
-                      Container(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          description1,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.normal,
-                            fontSize: 15.0,
-                          ),
-                          textAlign: TextAlign.right,
-                        ),
-                      ),
-                      const SizedBox(height: 10.0),
-                      Container(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          description2,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.normal,
-                            fontSize: 15.0,
-                          ),
-                          textAlign: TextAlign.right,
-                        ),
-                      ),
-                      const SizedBox(height: 10.0),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
       ),
     );
   }
@@ -750,8 +997,11 @@ class _HomeState extends State<Home> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               navBarItem(title: Strings.home, index: Constant.INT_ONE, icon: home, tappedIcon: tapHome),
-              navBarItem(title: Strings.profile, index: Constant.INT_TWO, icon: person, tappedIcon: tapPerson),
-              navBarItem(title: Strings.experiments, index: Constant.INT_THREE, icon: chat, tappedIcon: tapChat),
+              if (userRole == 'user')
+                navBarItem(title: Strings.profile, index: Constant.INT_TWO, icon: person, tappedIcon: tapPerson),
+              if (userRole == 'hospital')
+                navBarItem(title: Strings.yourDonations, index: Constant.INT_TWO, icon: person, tappedIcon: tapPerson),
+              navBarItem(title: Strings.donations, index: Constant.INT_THREE, icon: chat, tappedIcon: tapChat),
             ],
           ),
         ),

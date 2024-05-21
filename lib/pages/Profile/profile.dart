@@ -1,3 +1,4 @@
+import 'package:blooddonation/pages/Login/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:blooddonation/pages/Dashboard/home_controller.dart';
@@ -203,6 +204,9 @@ class _ProfileState extends State<Profile> {
                                           child: InkWell(
                                             onTap: () async {
                                               await FirebaseAuth.instance.signOut();
+                                              Navigator.of(context).pushReplacement(
+                                                MaterialPageRoute(builder: (context) => const Login()),
+                                              );
                                             },
                                             child: const Text('تسجيل الخروج',
                                                 style: TextStyle(
